@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:contact_sych/pages/components/contactsPage.dart';
 import 'contactsPage.dart';
 import 'contactsPageDisplay.dart';
 
@@ -130,8 +129,8 @@ class _MyDashState extends State<MyDash> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => MyHomePage(title: 'abc', key: null,)),
-                        );
+                          MaterialPageRoute(builder: (_) => MyHomePage(),
+                        ));
                       },
                       child: Stack(
                         children: <Widget>[

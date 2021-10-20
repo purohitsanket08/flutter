@@ -1,8 +1,11 @@
 import 'components/app-contact.class.dart';
-import 'components/contacts-list.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:contact_sych/pages/reminder.dart';
+
+import 'components/contacts-list.dart';
+
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -12,6 +15,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<AppContact> contacts = [];
   List<AppContact> contactsFiltered = [];
+  List arrayselected = [];
   Map<String, Color> contactsColorMap = new Map();
   TextEditingController searchController = new TextEditingController();
   bool contactsLoaded = false;
@@ -21,6 +25,21 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     getPermissions();
   }
+
+  arrayadd(add) {
+    setState(() {
+      arrayselected.add(add);
+      print(arrayselected);
+    });
+  }
+
+  arrayremove(remove) {
+    setState(() {
+      arrayselected.add(remove);
+      print(arrayselected);
+    });
+  }
+
   getPermissions() async {
     if (await Permission.contacts.request().isGranted) {
       getAllContacts();
@@ -37,20 +56,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   getAllContacts() async {
-    List colors = [
-      Colors.green,
-      Colors.indigo,
-      Colors.yellow,
-      Colors.orange
-    ];
+    List colors = [Colors.green, Colors.indigo, Colors.yellow, Colors.orange];
     int colorIndex = 0;
-    List<AppContact> _contacts = (await ContactsService.getContacts()).map((contact) {
+    List<AppContact> _contacts =
+        (await ContactsService.getContacts()).map((contact) {
       Color baseColor = colors[colorIndex];
       colorIndex++;
       if (colorIndex == colors.length) {
         colorIndex = 0;
       }
-      return new AppContact(info: contact, color: baseColor, key:id);
+      return new AppContact(info: contact, color: baseColor);
     }).toList();
     setState(() {
       contacts = _contacts;
@@ -80,6 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
           return phnFlattened.contains(searchTermFlatten);
         }, orElse: () => null);
 
+        // ignore: unnecessary_null_comparison
         return phone != null;
       });
     }
@@ -90,78 +106,115 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    contactsFiltered.forEach((element) {
+      print(element);
+    });
     bool isSearching = searchController.text.isNotEmpty;
-    bool listItemsExist = (
-        (isSearching == true && contactsFiltered.length > 0) ||
-            (isSearching != true && contacts.length > 0)
-    );
+    bool listItemsExist =
+        ((isSearching == true && contactsFiltered.length > 0) ||
+            (isSearching != true && contacts.length > 0));
     return Scaffold(
       appBar: AppBar(
-        title: Text("Contact List"),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        backgroundColor: Theme.of(context).primaryColorDark,
-        onPressed: () async {
-          try {
-            Contact contact = await ContactsService.openContactForm();
-            if (contact != null) {
-              getAllContacts();
-            }
-          } on FormOperationException catch (e) {
-            switch(e.errorCode) {
-              case FormOperationErrorCode.FORM_OPERATION_CANCELED:
-              case FormOperationErrorCode.FORM_COULD_NOT_BE_OPEN:
-              case FormOperationErrorCode.FORM_OPERATION_UNKNOWN_ERROR:
-                print(e.toString());
-            }
-          }
-        },
+        title: Text(
+          'Imports Contacts',
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        actions: <Widget>[
+          TextButton(
+            child: Text('Next'),
+            onPressed: () {
+              // var route = new MaterialPageRoute(
+              //   builder: (BuildContext context) =>
+              //   MyReminder(key: key,contacts: [],),
+              // );
+              // Navigator.of(context).push(route);
+              // Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //       builder: (context) => M(text: textToSend,),
+              //     ));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => MyReminder(SelectedContacts: ['Sanket','Devendra','Tukaram'],Contacts:contacts)
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Container(
-        padding: EdgeInsets.all(20),
         child: Column(
           children: <Widget>[
             Container(
+              padding: EdgeInsets.only(left: 10,right: 10,top: 10),
+              decoration: BoxDecoration(
+                // color: Colors.white,
+              ),
+
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    "Select the phone contacts you'd like to add to Dex.",
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                ],
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.only(left: 10,right: 10),
               child: TextField(
                 controller: searchController,
                 decoration: InputDecoration(
-                    labelText: 'Search',
-                    border: new OutlineInputBorder(
-                        borderSide: new BorderSide(
-                            color: Theme.of(context).primaryColor
-                        )
+                    isDense: true,
+                    contentPadding: EdgeInsets.all(13),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
                     ),
-                    prefixIcon: Icon(
-                        Icons.search,
-                        color: Theme.of(context).primaryColor
-                    )
-                ),
+                    filled: true,
+                    hintStyle: TextStyle(color: Colors.grey[800]),
+                    hintText: "Search",
+                    fillColor: Colors.white70),
               ),
             ),
-            contactsLoaded == true ?  // if the contacts have not been loaded yet
-            listItemsExist == true ?  // if we have contacts to show
-            ContactsList(
-              reloadContacts: () {
-                getAllContacts();
-              },
-              contacts: isSearching == true ? contactsFiltered : contacts,
-            ) : Container(
-                padding: EdgeInsets.only(top: 40),
-                child: Text(
-                  isSearching ?'No search results to show' : 'No contacts exist',
-                  style: TextStyle(color: Colors.grey, fontSize: 20),
-                )
-            ) :
-            Container(  // still loading contacts
-              padding: EdgeInsets.only(top: 40),
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            )
+            contactsLoaded == true
+                ? // if the contacts have not been loaded yet
+                listItemsExist == true
+                    ? // if we have contacts to show
+                    ContactsList(
+                        reloadContacts: () {
+                          getAllContacts();
+                        },
+                        contacts:
+                            isSearching == true ? contactsFiltered : contacts,
+                        arrayadd: arrayadd,
+                        arrayremove: arrayremove,
+                      )
+                    : Container(
+                        padding: EdgeInsets.only(top: 40),
+                        child: Text(
+                          isSearching
+                              ? 'No sea rch results to show'
+                              : 'No contacts exist',
+                          style: TextStyle(color: Colors.grey, fontSize: 20),
+                        ))
+                : Container(
+                    // still loading contacts
+                    padding: EdgeInsets.only(top: 100),
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
           ],
         ),
       ),
     );
   }
 }
+
+
